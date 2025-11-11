@@ -4,6 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import Icon from "@/components/ui/icon";
 import { useState } from "react";
 
@@ -17,11 +19,32 @@ const Index = () => {
   const [calculatorData, setCalculatorData] = useState({
     cargoType: "",
     weight: "",
-    distance: "",
-    loading: ""
+    loading: "",
+    cityFrom: "",
+    cityTo: ""
   });
 
   const [calculatedPrice, setCalculatedPrice] = useState<number | null>(null);
+  const [openFrom, setOpenFrom] = useState(false);
+  const [openTo, setOpenTo] = useState(false);
+
+  const cities = [
+    { value: "moscow", label: "Москва", distance: 0 },
+    { value: "spb", label: "Санкт-Петербург", distance: 700 },
+    { value: "kazan", label: "Казань", distance: 800 },
+    { value: "nnovgorod", label: "Нижний Новгород", distance: 420 },
+    { value: "ekb", label: "Екатеринбург", distance: 1800 },
+    { value: "novosibirsk", label: "Новосибирск", distance: 3300 },
+    { value: "samara", label: "Самара", distance: 1000 },
+    { value: "omsk", label: "Омск", distance: 2700 },
+    { value: "chelyabinsk", label: "Челябинск", distance: 1900 },
+    { value: "rostov", label: "Ростов-на-Дону", distance: 1100 },
+    { value: "ufa", label: "Уфа", distance: 1350 },
+    { value: "krasnoyarsk", label: "Красноярск", distance: 4200 },
+    { value: "voronezh", label: "Воронеж", distance: 520 },
+    { value: "perm", label: "Пермь", distance: 1400 },
+    { value: "volgograd", label: "Волгоград", distance: 950 }
+  ];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,7 +53,16 @@ const Index = () => {
 
   const calculatePrice = () => {
     const weight = parseFloat(calculatorData.weight) || 0;
-    const distance = parseFloat(calculatorData.distance) || 0;
+    
+    const cityFromData = cities.find(c => c.value === calculatorData.cityFrom);
+    const cityToData = cities.find(c => c.value === calculatorData.cityTo);
+    
+    if (!cityFromData || !cityToData) {
+      alert("Пожалуйста, выберите города отправления и назначения");
+      return;
+    }
+    
+    const distance = Math.abs(cityFromData.distance - cityToData.distance);
     
     let baseRate = 50;
     if (calculatorData.cargoType === "standard") baseRate = 50;
@@ -93,6 +125,96 @@ const Index = () => {
                     </DialogHeader>
                     <div className="space-y-4 mt-4">
                       <div>
+                        <label className="block text-sm font-medium mb-2">Город отправления</label>
+                        <Popover open={openFrom} onOpenChange={setOpenFrom}>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              aria-expanded={openFrom}
+                              className="w-full justify-between"
+                            >
+                              {calculatorData.cityFrom
+                                ? cities.find((city) => city.value === calculatorData.cityFrom)?.label
+                                : "Выберите город..."}
+                              <Icon name="ChevronsUpDown" size={16} className="ml-2 opacity-50" />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-[400px] p-0">
+                            <Command>
+                              <CommandInput placeholder="Поиск города..." />
+                              <CommandList>
+                                <CommandEmpty>Город не найден.</CommandEmpty>
+                                <CommandGroup>
+                                  {cities.map((city) => (
+                                    <CommandItem
+                                      key={city.value}
+                                      value={city.label}
+                                      onSelect={() => {
+                                        setCalculatorData({...calculatorData, cityFrom: city.value});
+                                        setOpenFrom(false);
+                                      }}
+                                    >
+                                      <Icon
+                                        name="Check"
+                                        size={16}
+                                        className={calculatorData.cityFrom === city.value ? "opacity-100 mr-2" : "opacity-0 mr-2"}
+                                      />
+                                      {city.label}
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Город назначения</label>
+                        <Popover open={openTo} onOpenChange={setOpenTo}>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              aria-expanded={openTo}
+                              className="w-full justify-between"
+                            >
+                              {calculatorData.cityTo
+                                ? cities.find((city) => city.value === calculatorData.cityTo)?.label
+                                : "Выберите город..."}
+                              <Icon name="ChevronsUpDown" size={16} className="ml-2 opacity-50" />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-[400px] p-0">
+                            <Command>
+                              <CommandInput placeholder="Поиск города..." />
+                              <CommandList>
+                                <CommandEmpty>Город не найден.</CommandEmpty>
+                                <CommandGroup>
+                                  {cities.map((city) => (
+                                    <CommandItem
+                                      key={city.value}
+                                      value={city.label}
+                                      onSelect={() => {
+                                        setCalculatorData({...calculatorData, cityTo: city.value});
+                                        setOpenTo(false);
+                                      }}
+                                    >
+                                      <Icon
+                                        name="Check"
+                                        size={16}
+                                        className={calculatorData.cityTo === city.value ? "opacity-100 mr-2" : "opacity-0 mr-2"}
+                                      />
+                                      {city.label}
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
+                      </div>
+                      <div>
                         <label className="block text-sm font-medium mb-2">Тип груза</label>
                         <Select value={calculatorData.cargoType} onValueChange={(value) => setCalculatorData({...calculatorData, cargoType: value})}>
                           <SelectTrigger>
@@ -112,15 +234,6 @@ const Index = () => {
                           placeholder="1000"
                           value={calculatorData.weight}
                           onChange={(e) => setCalculatorData({...calculatorData, weight: e.target.value})}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-2">Расстояние (км)</label>
-                        <Input 
-                          type="number" 
-                          placeholder="500"
-                          value={calculatorData.distance}
-                          onChange={(e) => setCalculatorData({...calculatorData, distance: e.target.value})}
                         />
                       </div>
                       <div>
