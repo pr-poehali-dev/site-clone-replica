@@ -25,26 +25,25 @@ const Index = () => {
   });
 
   const [calculatedPrice, setCalculatedPrice] = useState<number | null>(null);
-  const [calculatedDistance, setCalculatedDistance] = useState<number | null>(null);
-  const [cityFromInput, setCityFromInput] = useState("");
-  const [cityToInput, setCityToInput] = useState("");
+  const [openFrom, setOpenFrom] = useState(false);
+  const [openTo, setOpenTo] = useState(false);
 
   const cities = [
-    "Москва", "Санкт-Петербург", "Новосибирск", "Екатеринбург", "Казань", "Нижний Новгород",
-    "Челябинск", "Самара", "Омск", "Ростов-на-Дону", "Уфа", "Красноярск", "Воронеж", "Пермь",
-    "Волгоград", "Краснодар", "Саратов", "Тюмень", "Тольятти", "Ижевск", "Барнаул", "Ульяновск",
-    "Иркутск", "Хабаровск", "Ярославль", "Владивосток", "Махачкала", "Томск", "Оренбург",
-    "Кемерово", "Новокузнецк", "Рязань", "Набережные Челны", "Астрахань", "Пенза", "Киров",
-    "Липецк", "Чебоксары", "Калининград", "Тула", "Курск", "Сочи", "Ставрополь", "Улан-Удэ",
-    "Тверь", "Магнитогорск", "Иваново", "Брянск", "Белгород", "Сургут", "Владимир", "Архангельск",
-    "Чита", "Калуга", "Смоленск", "Волжский", "Якутск", "Череповец", "Курган", "Орёл", "Вологда",
-    "Владикавказ", "Мурманск", "Саранск", "Тамбов", "Стерлитамак", "Грозный", "Кострома",
-    "Петрозаводск", "Нижневартовск", "Йошкар-Ола", "Новороссийск", "Таганрог", "Комсомольск-на-Амуре",
-    "Сыктывкар", "Братск", "Дзержинск", "Нижнекамск", "Орск", "Ангарск", "Старый Оскол",
-    "Великий Новгород", "Благовещенск", "Энгельс", "Королёв", "Псков", "Бийск", "Балашиха",
-    "Южно-Сахалинск", "Армавир", "Люберцы", "Рыбинск", "Северодвинск", "Абакан", "Петропавловск-Камчатский",
-    "Норильск", "Каменск-Уральский", "Златоуст", "Сызрань", "Кызыл", "Новочеркасск", "Каспийск",
-    "Березники", "Волгодонск", "Назрань", "Новомосковск", "Новошахтинск", "Ноябрьск"
+    { value: "moscow", label: "Москва", distance: 0 },
+    { value: "spb", label: "Санкт-Петербург", distance: 700 },
+    { value: "kazan", label: "Казань", distance: 800 },
+    { value: "nnovgorod", label: "Нижний Новгород", distance: 420 },
+    { value: "ekb", label: "Екатеринбург", distance: 1800 },
+    { value: "novosibirsk", label: "Новосибирск", distance: 3300 },
+    { value: "samara", label: "Самара", distance: 1000 },
+    { value: "omsk", label: "Омск", distance: 2700 },
+    { value: "chelyabinsk", label: "Челябинск", distance: 1900 },
+    { value: "rostov", label: "Ростов-на-Дону", distance: 1100 },
+    { value: "ufa", label: "Уфа", distance: 1350 },
+    { value: "krasnoyarsk", label: "Красноярск", distance: 4200 },
+    { value: "voronezh", label: "Воронеж", distance: 520 },
+    { value: "perm", label: "Пермь", distance: 1400 },
+    { value: "volgograd", label: "Волгоград", distance: 950 }
   ];
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -52,39 +51,18 @@ const Index = () => {
     console.log("Form submitted:", formData);
   };
 
-  const calculateDistance = (city1: string, city2: string): number => {
-    const hash = (str: string) => {
-      let hash = 0;
-      for (let i = 0; i < str.length; i++) {
-        const char = str.charCodeAt(i);
-        hash = ((hash << 5) - hash) + char;
-        hash = hash & hash;
-      }
-      return Math.abs(hash);
-    };
-    
-    const h1 = hash(city1);
-    const h2 = hash(city2);
-    const diff = Math.abs(h1 - h2);
-    
-    return Math.floor(200 + (diff % 6000));
-  };
-
   const calculatePrice = () => {
     const weight = parseFloat(calculatorData.weight) || 0;
     
-    if (!calculatorData.cityFrom || !calculatorData.cityTo) {
-      alert("Пожалуйста, введите города отправления и назначения");
+    const cityFromData = cities.find(c => c.value === calculatorData.cityFrom);
+    const cityToData = cities.find(c => c.value === calculatorData.cityTo);
+    
+    if (!cityFromData || !cityToData) {
+      alert("Пожалуйста, выберите города отправления и назначения");
       return;
     }
     
-    if (!calculatorData.cargoType || !calculatorData.loading || weight <= 0) {
-      alert("Пожалуйста, заполните все поля калькулятора");
-      return;
-    }
-    
-    const distance = calculateDistance(calculatorData.cityFrom, calculatorData.cityTo);
-    setCalculatedDistance(distance);
+    const distance = Math.abs(cityFromData.distance - cityToData.distance);
     
     let baseRate = 50;
     if (calculatorData.cargoType === "standard") baseRate = 50;
@@ -148,79 +126,93 @@ const Index = () => {
                     <div className="space-y-4 mt-4">
                       <div>
                         <label className="block text-sm font-medium mb-2">Город отправления</label>
-                        <Command className="border rounded-md">
-                          <CommandInput 
-                            placeholder="Введите город..." 
-                            value={cityFromInput}
-                            onValueChange={(value) => {
-                              setCityFromInput(value);
-                              setCalculatorData({...calculatorData, cityFrom: value});
-                            }}
-                          />
-                          <CommandList>
-                            <CommandEmpty>Город не найден в списке.</CommandEmpty>
-                            <CommandGroup>
-                              {cities
-                                .filter(city => city.toLowerCase().includes(cityFromInput.toLowerCase()))
-                                .slice(0, 8)
-                                .map((city) => (
-                                  <CommandItem
-                                    key={city}
-                                    value={city}
-                                    onSelect={(value) => {
-                                      setCityFromInput(value);
-                                      setCalculatorData({...calculatorData, cityFrom: value});
-                                    }}
-                                  >
-                                    <Icon
-                                      name="Check"
-                                      size={16}
-                                      className={calculatorData.cityFrom === city ? "opacity-100 mr-2" : "opacity-0 mr-2"}
-                                    />
-                                    {city}
-                                  </CommandItem>
-                                ))}
-                            </CommandGroup>
-                          </CommandList>
-                        </Command>
+                        <Popover open={openFrom} onOpenChange={setOpenFrom}>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              aria-expanded={openFrom}
+                              className="w-full justify-between"
+                            >
+                              {calculatorData.cityFrom
+                                ? cities.find((city) => city.value === calculatorData.cityFrom)?.label
+                                : "Выберите город..."}
+                              <Icon name="ChevronsUpDown" size={16} className="ml-2 opacity-50" />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-[400px] p-0">
+                            <Command>
+                              <CommandInput placeholder="Поиск города..." />
+                              <CommandList>
+                                <CommandEmpty>Город не найден.</CommandEmpty>
+                                <CommandGroup>
+                                  {cities.map((city) => (
+                                    <CommandItem
+                                      key={city.value}
+                                      value={city.label}
+                                      onSelect={() => {
+                                        setCalculatorData({...calculatorData, cityFrom: city.value});
+                                        setOpenFrom(false);
+                                      }}
+                                    >
+                                      <Icon
+                                        name="Check"
+                                        size={16}
+                                        className={calculatorData.cityFrom === city.value ? "opacity-100 mr-2" : "opacity-0 mr-2"}
+                                      />
+                                      {city.label}
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
                       </div>
                       <div>
                         <label className="block text-sm font-medium mb-2">Город назначения</label>
-                        <Command className="border rounded-md">
-                          <CommandInput 
-                            placeholder="Введите город..." 
-                            value={cityToInput}
-                            onValueChange={(value) => {
-                              setCityToInput(value);
-                              setCalculatorData({...calculatorData, cityTo: value});
-                            }}
-                          />
-                          <CommandList>
-                            <CommandEmpty>Город не найден в списке.</CommandEmpty>
-                            <CommandGroup>
-                              {cities
-                                .filter(city => city.toLowerCase().includes(cityToInput.toLowerCase()))
-                                .slice(0, 8)
-                                .map((city) => (
-                                  <CommandItem
-                                    key={city}
-                                    value={city}
-                                    onSelect={(value) => {
-                                      setCityToInput(value);
-                                      setCalculatorData({...calculatorData, cityTo: value});
-                                    }}
-                                  >
-                                    <Icon
-                                      name="Check"
-                                      size={16}
-                                      className={calculatorData.cityTo === city ? "opacity-100 mr-2" : "opacity-0 mr-2"}
-                                    />
-                                    {city}
-                                  </CommandItem>
-                                ))}
-                            </CommandGroup>
-                          </CommandList>
-                        </Command>
+                        <Popover open={openTo} onOpenChange={setOpenTo}>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              aria-expanded={openTo}
+                              className="w-full justify-between"
+                            >
+                              {calculatorData.cityTo
+                                ? cities.find((city) => city.value === calculatorData.cityTo)?.label
+                                : "Выберите город..."}
+                              <Icon name="ChevronsUpDown" size={16} className="ml-2 opacity-50" />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-[400px] p-0">
+                            <Command>
+                              <CommandInput placeholder="Поиск города..." />
+                              <CommandList>
+                                <CommandEmpty>Город не найден.</CommandEmpty>
+                                <CommandGroup>
+                                  {cities.map((city) => (
+                                    <CommandItem
+                                      key={city.value}
+                                      value={city.label}
+                                      onSelect={() => {
+                                        setCalculatorData({...calculatorData, cityTo: city.value});
+                                        setOpenTo(false);
+                                      }}
+                                    >
+                                      <Icon
+                                        name="Check"
+                                        size={16}
+                                        className={calculatorData.cityTo === city.value ? "opacity-100 mr-2" : "opacity-0 mr-2"}
+                                      />
+                                      {city.label}
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
                       </div>
                       <div>
                         <label className="block text-sm font-medium mb-2">Тип груза</label>
@@ -263,9 +255,6 @@ const Index = () => {
                       {calculatedPrice !== null && (
                         <Card className="bg-primary/10 border-primary">
                           <CardContent className="p-6 text-center">
-                            <div className="text-sm text-muted-foreground mb-2">Маршрут:</div>
-                            <div className="text-lg font-semibold mb-1">{calculatorData.cityFrom} → {calculatorData.cityTo}</div>
-                            <div className="text-sm text-muted-foreground mb-4">Расстояние: ~{calculatedDistance} км</div>
                             <div className="text-sm text-muted-foreground mb-2">Предварительная стоимость:</div>
                             <div className="text-4xl font-bold text-primary">{calculatedPrice.toLocaleString()} ₽</div>
                             <div className="text-xs text-muted-foreground mt-2">Точная стоимость рассчитывается индивидуально</div>
