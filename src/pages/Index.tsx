@@ -2,6 +2,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import Icon from "@/components/ui/icon";
 import { useState } from "react";
 
@@ -12,9 +14,34 @@ const Index = () => {
     message: ""
   });
 
+  const [calculatorData, setCalculatorData] = useState({
+    cargoType: "",
+    weight: "",
+    distance: "",
+    loading: ""
+  });
+
+  const [calculatedPrice, setCalculatedPrice] = useState<number | null>(null);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Form submitted:", formData);
+  };
+
+  const calculatePrice = () => {
+    const weight = parseFloat(calculatorData.weight) || 0;
+    const distance = parseFloat(calculatorData.distance) || 0;
+    
+    let baseRate = 50;
+    if (calculatorData.cargoType === "standard") baseRate = 50;
+    if (calculatorData.cargoType === "fragile") baseRate = 70;
+    if (calculatorData.cargoType === "oversized") baseRate = 90;
+    
+    let loadingCost = 0;
+    if (calculatorData.loading === "yes") loadingCost = 3000;
+    
+    const totalPrice = (weight * baseRate) + (distance * 30) + loadingCost;
+    setCalculatedPrice(Math.round(totalPrice));
   };
 
   return (
@@ -53,11 +80,78 @@ const Index = () => {
                 Гарантируем безопасность и своевременную доставку грузов.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
-                <Button size="lg" className="text-lg">
-                  <Icon name="Calculator" size={20} className="mr-2" />
-                  Рассчитать стоимость
-                </Button>
-                <Button size="lg" variant="outline" className="text-lg">
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button size="lg" className="text-lg">
+                      <Icon name="Calculator" size={20} className="mr-2" />
+                      Рассчитать стоимость
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[500px]">
+                    <DialogHeader>
+                      <DialogTitle className="text-2xl">Калькулятор стоимости</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 mt-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Тип груза</label>
+                        <Select value={calculatorData.cargoType} onValueChange={(value) => setCalculatorData({...calculatorData, cargoType: value})}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Выберите тип груза" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="standard">Стандартный груз</SelectItem>
+                            <SelectItem value="fragile">Хрупкий груз</SelectItem>
+                            <SelectItem value="oversized">Негабаритный груз</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Вес груза (кг)</label>
+                        <Input 
+                          type="number" 
+                          placeholder="1000"
+                          value={calculatorData.weight}
+                          onChange={(e) => setCalculatorData({...calculatorData, weight: e.target.value})}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Расстояние (км)</label>
+                        <Input 
+                          type="number" 
+                          placeholder="500"
+                          value={calculatorData.distance}
+                          onChange={(e) => setCalculatorData({...calculatorData, distance: e.target.value})}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Погрузка/разгрузка</label>
+                        <Select value={calculatorData.loading} onValueChange={(value) => setCalculatorData({...calculatorData, loading: value})}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Требуется ли погрузка?" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="no">Не требуется</SelectItem>
+                            <SelectItem value="yes">Требуется (+ 3000 ₽)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <Button onClick={calculatePrice} className="w-full" size="lg">
+                        <Icon name="Calculator" size={20} className="mr-2" />
+                        Рассчитать
+                      </Button>
+                      {calculatedPrice !== null && (
+                        <Card className="bg-primary/10 border-primary">
+                          <CardContent className="p-6 text-center">
+                            <div className="text-sm text-muted-foreground mb-2">Предварительная стоимость:</div>
+                            <div className="text-4xl font-bold text-primary">{calculatedPrice.toLocaleString()} ₽</div>
+                            <div className="text-xs text-muted-foreground mt-2">Точная стоимость рассчитывается индивидуально</div>
+                          </CardContent>
+                        </Card>
+                      )}
+                    </div>
+                  </DialogContent>
+                </Dialog>
+                <Button size="lg" variant="outline" className="text-lg" onClick={() => document.getElementById('services')?.scrollIntoView({behavior: 'smooth'})}>
                   <Icon name="FileText" size={20} className="mr-2" />
                   Наши услуги
                 </Button>
